@@ -4,6 +4,7 @@
             [monger.credentials :as mcred]
             [monger.collection :as mc]
             [monger.query :refer :all]
+            [monger.operators :refer :all]
             )
   (:import [org.bson.types ObjectId]
            [com.mongodb DB WriteConcern]))
@@ -111,7 +112,22 @@
                         :opinion "\"I'll say what the book already says about itself pretty vocally, but it's worth repeating: don't read this as your first book on Clojure! It presumes you already know quite a bit about its syntax, and even some of the most common idioms in use without giving even a passing mention. It jumps in right at the deep end of the pool where the table with cocktails is floating - I guess that's where the book derives its name from."
                         :datetime (java.util.Date.)
                         }
-                       {:_id user_Matija
+                       {:user_id user_JohnPract
+                          :username "John"
+                          :userpic default-avatar
+                          :idea_id idea_beginersClo
+                          :idea-type :comparable
+                          :idea-text "Beginners Clojure"
+                          :idea-note "Good starting point on Clojure"
+                          :book_id book_Joy
+                          :book-name "The Joy of Clojure"
+                          :book-year 2011
+                          :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
+                          :rating -2
+                          :opinion "JoC may not be a good first book to read for a Clojure newbie. It's deep like the language itself and it will take you a while to fully appreciate the elegance of what you encounter. I for one know that I'll be back to re-read sections that didn't fully sink in the first time around."
+                          :datetime (java.util.Date.)
+                          }
+                       {:user_id user_Matija
                         :username "Matija"
                         :userpic default-avatar
                         :idea_id idea_beginersClo
@@ -125,7 +141,7 @@
                         :rating 1
                         :opinion "A dense and solid, yet incomplete intro to the Clojure programming language. Nothing apart from the language overview and some performance considerations is provided, so the title is somewhat misleading - \"Clojure language in a nutshell\" would do it more justice. I found the style terrifically clear and straight-to-the-point, which makes it a good read. On the other hand, important information like destructuring, the reader, etc. has been left out."
                         :datetime (java.util.Date.)}
-                       {:_id user_SuvashJoy
+                       {:user_id user_SuvashJoy
                         :username "Suvash"
                         :userpic default-avatar
                         :idea_id idea_CloPhilosophy
@@ -139,7 +155,7 @@
                         :rating 2
                         :opinion "Covers a lot, most importantly teaches 'The Clojure way'."
                         :datetime (java.util.Date.)}
-                       {:_id user_MarshalJoy
+                       {:user_id user_MarshalJoy
                         :username "Marshal"
                         :userpic default-avatar
                         :idea_id idea_TopicClojure
@@ -153,7 +169,7 @@
                         :rating 2
                         :opinion "One of the best language-specific programming books I've read in quite a while. "
                         :datetime (java.util.Date.)}
-                       {:_id user_JohnPract
+                       {:user_id user_JohnPract
                         :username "John"
                         :userpic default-avatar
                         :idea_id idea_beginersClo
@@ -167,7 +183,7 @@
                         :rating 1
                         :opinion "Not a bad book, but a little outdated (Clojure 1.1 instead of the most recent 1.7). Definitely an easier read than Clojure in Action. I'd start with this one and use Clojure in Action for a reference."
                         :datetime (java.util.Date.)}
-                       {:_id user_Mukesh
+                       {:user_id user_Mukesh
                         :username "Mukesh"
                         :userpic default-avatar
                         :idea_id idea_beginersClo
@@ -246,6 +262,60 @@
   (map str_id ( mc/find-maps db "books"))
   )
 
+(defn get-book-ideas [book_id]
+  (map (fn [[_id imprs]]
+         {:idea_id _id
+          :idea-text (:idea-text (first imprs))
+          :idea-note (:idea-note (first imprs))
+          :impressions-count (count imprs)
+          :impressions imprs})
+  (group-by :idea_id
+    (map str_id (mc/find-maps db "impressions" {:idea-type :idea
+                                              :book_id (ObjectId. book_id)
+                                        } [:rating :idea-text :idea-note :idea_id])))))
+
+(defn wrap-comps [[_id comps]]
+  {:idea_id _id
+   :idea-text (:idea-text (first comps))
+   :idea-note (:idea-note (first comps))
+   :idea-rating (reduce + (map :rating comps) )
+   :impressions-count (count comps)
+   :impressions comps})
+
+(defn rating-comp [x y]
+  (let [c (> (:idea-rating x) (:idea-rating y))]
+    (if (not= c 0)
+      c
+      (> x y))))
+
+(defn sort-comps [comps]
+  (sort-by :idea-rating comps ))
+
+(defn get-book-good-for [book_id]
+  (sort-comps
+    (map wrap-comps
+         (group-by :idea_id
+                   (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
+                                                               :book_id (ObjectId. book_id)
+                                                               :rating { $gte 0}}
+                                             [:rating :idea-text :idea-note :idea_id])))
+                    )
+               ))
+(defn get-book-bad-for [book_id]
+
+  ;(reverse
+    (sort-comps
+      (map wrap-comps
+           (group-by :idea_id
+                     (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
+                                                                 :book_id   (ObjectId. book_id)
+                                                                 :rating    {$lte 0}}
+                                               [:rating :idea-text :idea-note :idea_id])))
+           )
+      )
+
+  ; )
+  )
 
 ;  Impressions
 
@@ -281,6 +351,10 @@
 
 (defn get-book-insight [book_id]
   ; some representation of ideas that are in the book
+  (assoc (get-book-data book_id)
+    :ideas (get-book-ideas book_id)
+    :good-for (get-book-good-for book_id)
+    :bad-for (get-book-bad-for book_id))
   )
 
 (defn get-idea [idea_id]
@@ -288,3 +362,7 @@
                                  (map str_id
                                       (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)})))
   )
+
+
+
+;(get-book-insight "5662ee29505e7c5d71a9aba6")
