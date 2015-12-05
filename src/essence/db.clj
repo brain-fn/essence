@@ -1,7 +1,9 @@
 (ns db
+  (:refer-clojure :exclude [sort find])
   (:require [monger.core :as mg]
             [monger.credentials :as mcred]
             [monger.collection :as mc]
+            [monger.query :refer :all]
             )
   (:import [org.bson.types ObjectId]
            [com.mongodb DB WriteConcern]))
@@ -107,6 +109,7 @@
                         :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
                         :rating -2
                         :opinion "\"I'll say what the book already says about itself pretty vocally, but it's worth repeating: don't read this as your first book on Clojure! It presumes you already know quite a bit about its syntax, and even some of the most common idioms in use without giving even a passing mention. It jumps in right at the deep end of the pool where the table with cocktails is floating - I guess that's where the book derives its name from."
+                        :datetime (java.util.Date.)
                         }
                        {:_id user_Matija
                         :username "Matija"
@@ -120,7 +123,8 @@
                         :book-year 2010
                         :book-cover "https://d.gr-assets.com/books/1347708356l/7903431.jpg"
                         :rating 1
-                        :opinion "A dense and solid, yet incomplete intro to the Clojure programming language. Nothing apart from the language overview and some performance considerations is provided, so the title is somewhat misleading - \"Clojure language in a nutshell\" would do it more justice. I found the style terrifically clear and straight-to-the-point, which makes it a good read. On the other hand, important information like destructuring, the reader, etc. has been left out."}
+                        :opinion "A dense and solid, yet incomplete intro to the Clojure programming language. Nothing apart from the language overview and some performance considerations is provided, so the title is somewhat misleading - \"Clojure language in a nutshell\" would do it more justice. I found the style terrifically clear and straight-to-the-point, which makes it a good read. On the other hand, important information like destructuring, the reader, etc. has been left out."
+                        :datetime (java.util.Date.)}
                        {:_id user_SuvashJoy
                         :username "Suvash"
                         :userpic default-avatar
@@ -133,7 +137,8 @@
                         :book-year 2011
                         :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
                         :rating 2
-                        :opinion "Covers a lot, most importantly teaches 'The Clojure way'."}
+                        :opinion "Covers a lot, most importantly teaches 'The Clojure way'."
+                        :datetime (java.util.Date.)}
                        {:_id user_MarshalJoy
                         :username "Marshal"
                         :userpic default-avatar
@@ -146,7 +151,8 @@
                         :book-year 2011
                         :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
                         :rating 2
-                        :opinion "One of the best language-specific programming books I've read in quite a while. "}
+                        :opinion "One of the best language-specific programming books I've read in quite a while. "
+                        :datetime (java.util.Date.)}
                        {:_id user_JohnPract
                         :username "John"
                         :userpic default-avatar
@@ -159,7 +165,8 @@
                         :book-year 2010
                         :book-cover "https://d.gr-assets.com/books/1347708356l/7903431.jpg"
                         :rating 1
-                        :opinion "Not a bad book, but a little outdated (Clojure 1.1 instead of the most recent 1.7). Definitely an easier read than Clojure in Action. I'd start with this one and use Clojure in Action for a reference."}
+                        :opinion "Not a bad book, but a little outdated (Clojure 1.1 instead of the most recent 1.7). Definitely an easier read than Clojure in Action. I'd start with this one and use Clojure in Action for a reference."
+                        :datetime (java.util.Date.)}
                        {:_id user_Mukesh
                         :username "Mukesh"
                         :userpic default-avatar
@@ -172,7 +179,8 @@
                         :book-year 2015
                         :book-cover "https://d.gr-assets.com/books/1432497082l/20873338.jpg"
                         :rating 2
-                        :opinion "If you want to get into clojure, look no further. This book gives a very good introduction to clojure and the ideas behind the language.\n\nTotally worth it."}])
+                        :opinion "If you want to get into clojure, look no further. This book gives a very good introduction to clojure and the ideas behind the language.\n\nTotally worth it."
+                        :datetime (java.util.Date.)}])
 
      ))
 
@@ -188,7 +196,7 @@
 (defn get-user-from-name [username]
   (mc/find-one-as-map db "users" {:username username}))
 
-(defn save-user
+(defn add-user
   ([username] (save-user username default-avatar))
   ([username avatar]
     (mc/insert db "users" {:username username
@@ -200,7 +208,10 @@
 (defn get-idea-data [idea_id]
   (mc/find-one-as-map db "ideas" {:_id (ObjectId. idea_id)}))
 
-(defn save-idea [])
+(defn add-idea [type text note]
+  (mc/insert db "ideas" {:type type
+                         :text text
+                         :note note}))
 
 
 ;  Books
@@ -208,8 +219,15 @@
 (defn get-book-data [book_id]
   (mc/find-one-as-map db "books" {:_id (ObjectId. book_id)}))
 
-(defn list-books
-  (mc/get-maps db "books"))
+(defn add-book [name year cover_url authors goodreads-link]
+  (mc/insert db "books" {:name name
+                         :year year
+                         :cover cover_url
+                         :authors authors
+                         :goodreads-link goodreads-link}))
+
+(defn list-books []
+  (mc/find-maps db "books"))
 
 
 ;  Impressions
@@ -218,7 +236,7 @@
   (let [user (get-user-data user_id)
         idea (get-idea-data idea_id)
         book (get-book-data book_id)]
-  (nc/insert db "impressions"
+  (mc/insert db "impressions"
              {:user_id user_id
                  :username (:username user)
                  :userpic (:userpic user)
@@ -233,3 +251,16 @@
                  :rating rating
                  :opinion opinion
                  })))
+
+
+;  Views
+
+(defn get-book-impressions [book_id]
+  (with-collection db "impressions"
+                   (find {:book_id (ObjectId. book_id)})
+                   (sort {:datetime -1})))
+
+
+(defn get-book-insight [book_id]
+  ; some representation of ideas that are in the book
+  )
