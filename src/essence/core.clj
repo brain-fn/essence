@@ -33,11 +33,14 @@
                            (form/submit-button "Sign In"))))
 
 (defn app-handler [req]
-   (wrap-page [:div {:id "app"}]
-              (page/include-js "js/compiled/essence.js")))
+  (let [current-user (friend/current-authentication req)]
+    (wrap-page [:div {:id "app"}]
+               (form/hidden-field {:id "current-user"} "current-user" (:identity current-user))
+               (page/include-js "js/compiled/essence.js"))))
 
 (defn login [req]
   (friend/authorize #{::user} "You're a user"))
+
 (defn logout [req]
   (friend/logout* (resp/redirect (str (:context req) "/"))))
 

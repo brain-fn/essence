@@ -1,12 +1,13 @@
 (ns essence.components
-  (:require [om.next :as om :refer-macros [defui]]
+  (:require [clojure.string :as string]
+            [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]))
 
 (defui App
   static om/IQuery
   (query [this]
-    [:app/hello])
+    [:app/user])
   Object
   (render [this]
-          (let [{:keys [:app/hello]} (om/props this)]
-            (dom/div nil (or hello "Hi")))))
+    (let [{:keys [:app/user]} (om/props this)]
+      (dom/div nil (str "Hello, " (if-not (string/blank? user) user "anonymous"))))))

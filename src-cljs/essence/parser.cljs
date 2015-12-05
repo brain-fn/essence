@@ -8,7 +8,7 @@
   (om/parser {:read read
               :mutate mutate}))
 
-(defmethod read :app/hello
+(defmethod read :app/user
   [{:keys [state] :as env} k _]
   (let [st @state]
     {:value (get st k)}))
