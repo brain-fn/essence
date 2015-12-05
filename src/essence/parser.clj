@@ -21,6 +21,10 @@
 (defmethod readf :app/user [{:keys [state]} k _]
   {:value {:name (get @state k)}})
 
+(defmethod readf :subquery
+  [{:keys [query ast] :as env} k params]
+  {:value (parser env query params)})
+
 (defmethod readf :books [{:keys [state query]} k _]
   (letfn [(add-impression-count [book]
             (if (contains? (set query) :impressions/count)

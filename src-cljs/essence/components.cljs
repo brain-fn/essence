@@ -19,14 +19,13 @@
 
 (def header (om/factory Header))
 
-
 (defui Book
   static om/Ident
   (ident [this props]
-    [:books/by-name (:name props)])
+    [:books/by-id (:_id props)])
   static om/IQuery
   (query [this]
-    [:name :year :cover :authors :goodreads-link :impressions/count])
+    [:_id :name :year :cover :authors :goodreads-link :impressions/count])
   Object
   (render [this]
           (let [{:keys [name authors year cover goodreads-link] :as props} (om/props this)]
@@ -45,20 +44,33 @@
 (def book (om/factory Book))
 
 (defui BookList
-  Object
-  (render [this]
-          (let [books (om/props this)]
-            (dom/div nil (map book books)))))
-
-(def book-list (om/factory BookList))
-
-(defui App
   static om/IQuery
   (query [this]
-         [{:app/user (om/get-query Header)}
-          {:books (om/get-query Book)}])
+         [{:books (om/get-query Book)}])
   Object
   (render [this]
-          (dom/div nil
-                   (header (:app/user (om/props this)))
-                   (book-list (:books (om/props this))))))
+          (let [books (-> this om/props :books)]
+            (dom/div nil (map book books)))))
+
+(def route->query
+  {:index (om/get-query BookList)})
+
+(def route->factory
+  {:index (om/factory BookList)})
+
+(defui App
+  static om/IQueryParams
+  (params [this]
+    {:subquery (:index route->query)})
+  static om/IQuery
+  (query [this]
+    `[:route
+      {:app/user ~(om/get-query Header)}
+      {:subquery ?subquery}])
+  Object
+  (render [this]
+    (let [route (-> this om/props :route)
+          factory (route->factory route)]
+      (dom/div nil
+        (header (:app/user (om/props this)))
+        (factory (-> this om/props :subquery))))))
