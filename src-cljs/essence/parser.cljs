@@ -9,6 +9,8 @@
               :mutate mutate}))
 
 (defmethod read :app/user
-  [{:keys [state] :as env} k _]
+  [{:keys [state ast] :as env} k _]
   (let [st @state]
-    {:value (get st k)}))
+    {:value (get st k)
+     :remote true
+     :server ast}))

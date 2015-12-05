@@ -5,50 +5,29 @@
             [compojure.route :as route]
             [compojure.handler :refer [site]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
-            [ring.util.response :as resp]
-            [ring.util.codec :as codec]
-            [ring.util.anti-forgery :refer [anti-forgery-field]]
             [cemerick.friend :as friend]
             [cemerick.friend.workflows :as workflows]
-            [hiccup.core :as h]
-            [hiccup.form :as form]
-            [hiccup.page :as page]
-            [org.httpkit.server :as httpkit]))
+            [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.http-kit :refer [sente-web-server-adapter]]
+            [org.httpkit.server :as httpkit]
+            [essence.handlers :as handlers]))
 
-(defn head []
-  [:head
-   [:title "Essence"]
-   (page/include-css "css/style.css")])
-
-(defn wrap-page [& markup]
-  (h/html (head)
-          [:body markup]))
-
-(defn index [req]
-  (wrap-page [:h1 "Essence"]
-             [:p [:a {:href "/app/"} "Look Inside a Book!"]]
-             (form/form-to [:post "/login"]
-                           (anti-forgery-field)
-                           (form/text-field "username")
-                           (form/submit-button "Sign In"))))
-
-(defn app-handler [req]
-  (let [current-user (friend/current-authentication req)]
-    (wrap-page [:div {:id "app"}]
-               (form/hidden-field {:id "current-user"} "current-user" (:identity current-user))
-               (page/include-js "js/compiled/essence.js"))))
-
-(defn login [req]
-  (friend/authorize #{::user} "You're a user"))
-
-(defn logout [req]
-  (friend/logout* (resp/redirect (str (:context req) "/"))))
+(let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
+              connected-uids]}
+      (sente/make-channel-socket! sente-web-server-adapter {:packer :edn})]
+  (def ring-ajax-post                ajax-post-fn)
+  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
+  (def ch-chsk                       ch-recv) ; ChannelSocket's receive channel
+  (def chsk-send!                    send-fn) ; ChannelSocket's send API fn
+  (def connected-uids                connected-uids) ; Watchable, read-only atom
+)
 
 (defroutes app-routes
-  (GET "/" [] index)
-  (GET "/app/" [] app-handler)
-  (POST "/login" [] login)
-  (POST "/logout" [] logout)
+  (GET "/" [] handlers/index)
+  (GET "/app/" [] handlers/app-handler)
+  (POST "/query" [] handlers/query)
+  (GET  "/ws" req (ring-ajax-get-or-ws-handshake req))
+  (POST "/ws" req (ring-ajax-post                req))
   (route/resources "/app/")
   (route/not-found "There's no Essence here :("))
 
@@ -59,39 +38,48 @@
     ; (println res)
     res))
 
-(defn unauthorized-handler [req]
-  (-> "You do not have sufficient privileges to access "
-      (str (:uri req))
-      resp/response
-      (resp/status 401)))
-
 (def app
   (-> app-routes
       (friend/authenticate
        {:allow-anon? true
         :login-uri "/login"
         :default-landing-uri "/app/"
-        :unauthorized-handler unauthorized-handler
+        :unauthorized-handler handlers/unauthorized-handler
         :credential-fn credentials-fn
         :workflows [(workflows/interactive-form)]})
       (wrap-defaults site-defaults)))
 
-(defonce server (atom nil))
+(defonce webserver (atom nil))
 
-(defn stop-server []
-  (when-not (nil? @server)
-    (@server :timeout 100)
-    (reset! server nil)))
+(defn stop-web-server! []
+  (when-let [w @webserver]
+    ((:stop-fn w))
+    (reset! webserver nil)))
 
-(defn start-server []
+(defn start-web-server! []
+  (stop-web-server!)
   (let [env (System/getenv)
-        port (read-string (get env "PORT" "8080"))]
-    (reset! server (httpkit/run-server #'app {:port port}))
+        port (read-string (get env "PORT" "8080"))
+        stop-fn (httpkit/run-server #'app {:port port})]
+    (reset! webserver {:server nil
+                       :port port
+                       :stop-fn (fn [] (stop-fn :timeout 100))})
     (println (str "Server started on port " port))))
 
-(defn restart []
-  (stop-server)
-  (start-server))
+(defonce router (atom nil))
+
+(defn stop-router! []
+  (when-let [stop-f @router]
+    (stop-f)))
+
+(defn start-router! []
+  (stop-router!)
+  (reset! router
+          (sente/start-chsk-router! ch-chsk handlers/query)))
+
+(defn start! []
+  (start-router!)
+  (start-web-server!))
 
 (defn -main []
-  (start-server))
+  (start!))

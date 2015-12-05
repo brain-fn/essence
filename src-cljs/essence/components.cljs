@@ -10,4 +10,4 @@
   Object
   (render [this]
     (let [{:keys [:app/user]} (om/props this)]
-      (dom/div nil (str "Hello, " (if-not (string/blank? user) user "anonymous"))))))
+      (dom/div nil (str "Hello, " user)))))

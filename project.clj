@@ -11,6 +11,7 @@
                  [http-kit "2.1.18"]
                  [hiccup "1.0.5"]
                  [com.cemerick/friend "0.2.1" :exclusions [org.clojure/core.cache]]
+                 [com.taoensso/sente "1.6.0"]
                  [com.novemberain/monger "3.0.0-rc2"]
 
                  [org.omcljs/om "1.0.0-alpha25"]]
