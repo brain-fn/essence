@@ -197,7 +197,7 @@
   (mc/find-one-as-map db "users" {:username username}))
 
 (defn add-user
-  ([username] (save-user username default-avatar))
+  ([username] (add-user username default-avatar))
   ([username avatar]
     (mc/insert db "users" {:username username
                 :userpic avatar})))
