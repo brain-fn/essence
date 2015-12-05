@@ -279,7 +279,12 @@
                    (find {:book_id (ObjectId. book_id)})
                    (sort {:datetime -1}))))
 
-
 (defn get-book-insight [book_id]
   ; some representation of ideas that are in the book
+  )
+
+(defn get-idea [idea_id]
+  (assoc (get-idea-data idea_id) :impressions
+                                 (map str_id
+                                      (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)})))
   )
