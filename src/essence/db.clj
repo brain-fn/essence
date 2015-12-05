@@ -101,8 +101,11 @@
                         :idea-type :comparable
                         :idea-text "Beginners Clojure"
                         :idea-note "Good starting point on Clojure"
+                        :book_id book_Joy
+                        :book-name "The Joy of Clojure"
+                        :book-year 2011
+                        :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
                         :rating -2
-                        :book book_Joy
                         :opinion "\"I'll say what the book already says about itself pretty vocally, but it's worth repeating: don't read this as your first book on Clojure! It presumes you already know quite a bit about its syntax, and even some of the most common idioms in use without giving even a passing mention. It jumps in right at the deep end of the pool where the table with cocktails is floating - I guess that's where the book derives its name from."
                         }
                        {:_id user_Matija
@@ -112,8 +115,11 @@
                         :idea-type :comparable
                         :idea-text "Beginners Clojure"
                         :idea-note "Good starting point on Clojure"
+                        :book_id book_Practical
+                        :book-name "Practical Clojure"
+                        :book-year 2010
+                        :book-cover "https://d.gr-assets.com/books/1347708356l/7903431.jpg"
                         :rating 1
-                        :book book_Practical
                         :opinion "A dense and solid, yet incomplete intro to the Clojure programming language. Nothing apart from the language overview and some performance considerations is provided, so the title is somewhat misleading - \"Clojure language in a nutshell\" would do it more justice. I found the style terrifically clear and straight-to-the-point, which makes it a good read. On the other hand, important information like destructuring, the reader, etc. has been left out."}
                        {:_id user_SuvashJoy
                         :username "Suvash"
@@ -122,8 +128,11 @@
                         :idea-type :comparable
                         :idea-text "Clojure Philosophy"
                         :idea-note "Get deep into core principles of Clojure"
+                        :book_id book_Joy
+                        :book-name "The Joy of Clojure"
+                        :book-year 2011
+                        :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
                         :rating 2
-                        :book book_Joy
                         :opinion "Covers a lot, most importantly teaches 'The Clojure way'."}
                        {:_id user_MarshalJoy
                         :username "Marshal"
@@ -132,8 +141,11 @@
                         :idea-type :comparable
                         :idea-text "Topic: Clojure"
                         :idea-note "Good example of the topic coverage"
+                        :book_id book_Joy
+                        :book-name "The Joy of Clojure"
+                        :book-year 2011
+                        :book-cover "https://d.gr-assets.com/books/1272940175l/8129142.jpg"
                         :rating 2
-                        :book book_Joy
                         :opinion "One of the best language-specific programming books I've read in quite a while. "}
                        {:_id user_JohnPract
                         :username "John"
@@ -142,8 +154,11 @@
                         :idea-type :comparable
                         :idea-text "Beginners Clojure"
                         :idea-note "Good starting point on Clojure"
+                        :book_id book_Practical
+                        :book-name "Practical Clojure"
+                        :book-year 2010
+                        :book-cover "https://d.gr-assets.com/books/1347708356l/7903431.jpg"
                         :rating 1
-                        :book book_Practical
                         :opinion "Not a bad book, but a little outdated (Clojure 1.1 instead of the most recent 1.7). Definitely an easier read than Clojure in Action. I'd start with this one and use Clojure in Action for a reference."}
                        {:_id user_Mukesh
                         :username "Mukesh"
@@ -152,18 +167,64 @@
                         :idea-type :comparable
                         :idea-text "Beginners Clojure"
                         :idea-note "Good starting point on Clojure"
+                        :book_id book_Brave
+                        :book-name "Clojure for the Brave and True"
+                        :book-year 2015
+                        :book-cover "https://d.gr-assets.com/books/1432497082l/20873338.jpg"
                         :rating 2
-                        :book book_Brave
                         :opinion "If you want to get into clojure, look no further. This book gives a very good introduction to clojure and the ideas behind the language.\n\nTotally worth it."}])
 
      ))
 
 
- (let [conn (mg/connect-with-credentials "94.237.25.83" 27777 (mcred/create "siteUserAdmin" "admin" "password"))
-      db   (mg/get-db conn "essence")]
+ (def conn (mg/connect-with-credentials "94.237.25.83" 27777 (mcred/create "siteUserAdmin" "admin" "password")))
+ (def db   (mg/get-db conn "essence"))
+
+;  Users
+
+(defn get-user-data [user_id]
+  (mc/find-one-as-map db "users" {:_id (ObjectId. user_id)}))
+
+(defn get-user-from-name [username]
+  (mc/find-one-as-map db "users" {:username username}))
+
+(defn save-user
+  ([username] (save-user username default-avatar))
+  ([username avatar]
+    (mc/insert db "users" {:username username
+                :userpic avatar})))
 
 
-   ;( prepopulate-db db)
+;  Ideas
+
+(defn get-idea-data [idea_id]
+  (mc/find-one-as-map db "ideas" {:_id (ObjectId. idea_id)}))
 
 
-  )
+;  Books
+
+(defn get-book-data [book_id]
+  (mc/find-one-as-map db "books" {:_id (ObjectId. book_id)}))
+
+
+;  Impressions
+
+(defn add-impression [user_id idea_id book_id rating opinion]
+  (let [user (get-user-data user_id)
+        idea (get-idea-data idea_id)
+        book (get-book-data book_id)]
+  (nc/insert db "impressions"
+             {:user_id user_id
+                 :username (:username user)
+                 :userpic (:userpic user)
+                 :idea_id idea_id
+                 :idea-type (:idea-type idea)
+                 :idea-text (:idea-text idea)
+                 :idea-note (:idea-note idea)
+                 :book_id book_id
+                 :book-name (:book-name book)
+                 :book-year (:book-year book)
+                 :book-cover (:book-cover book)
+                 :rating rating
+                 :opinion opinion
+                 })))
