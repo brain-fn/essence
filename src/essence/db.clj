@@ -188,46 +188,63 @@
  (def conn (mg/connect-with-credentials "94.237.25.83" 27777 (mcred/create "siteUserAdmin" "admin" "password")))
  (def db   (mg/get-db conn "essence"))
 
+
+(defn map-function-on-map-vals [m f]
+  (apply merge
+         (map (fn [[k v]] {k (f v)})
+              m)))
+
+(defn str_id [doc]
+  (map-function-on-map-vals doc #(if (= (type %) ObjectId) (str %) %))
+  )
+
 ;  Users
 
 (defn get-user-data [user_id]
-  (mc/find-one-as-map db "users" {:_id (ObjectId. user_id)}))
+  (str_id
+    (mc/find-one-as-map db "users" {:_id (ObjectId. user_id)}))
+  )
 
 (defn get-user-from-name [username]
-  (mc/find-one-as-map db "users" {:username username}))
+  (str_id (mc/find-one-as-map db "users" {:username username}))
+  )
 
 (defn add-user
   ([username] (add-user username default-avatar))
   ([username avatar]
-    (mc/insert db "users" {:username username
-                :userpic avatar})))
+   (str_id
+     (mc/insert db "users" {:username username
+                            :userpic avatar}))))
 
 
 ;  Ideas
 
 (defn get-idea-data [idea_id]
-  (mc/find-one-as-map db "ideas" {:_id (ObjectId. idea_id)}))
+  (str_id (mc/find-one-as-map db "ideas" {:_id (ObjectId. idea_id)}))
+  )
 
 (defn add-idea [type text note]
-  (mc/insert db "ideas" {:type type
-                         :text text
-                         :note note}))
+  (str_id (mc/insert db "ideas" {:type type
+                                 :text text
+                                 :note note})) )
 
 
 ;  Books
 
 (defn get-book-data [book_id]
-  (mc/find-one-as-map db "books" {:_id (ObjectId. book_id)}))
+  (str_id (mc/find-one-as-map db "books" {:_id (ObjectId. book_id)}))
+  )
 
 (defn add-book [name year cover_url authors goodreads-link]
-  (mc/insert db "books" {:name name
+  (str_id (mc/insert db "books" {:name name
                          :year year
                          :cover cover_url
                          :authors authors
-                         :goodreads-link goodreads-link}))
+                         :goodreads-link goodreads-link})))
 
 (defn list-books []
-  (mc/find-maps db "books"))
+  (map str_id ( mc/find-maps db "books"))
+  )
 
 
 ;  Impressions
@@ -236,8 +253,8 @@
   (let [user (get-user-data user_id)
         idea (get-idea-data idea_id)
         book (get-book-data book_id)]
-  (mc/insert db "impressions"
-             {:user_id user_id
+    (str_id (mc/insert db "impressions"
+                {:user_id user_id
                  :username (:username user)
                  :userpic (:userpic user)
                  :idea_id idea_id
@@ -250,15 +267,17 @@
                  :book-cover (:book-cover book)
                  :rating rating
                  :opinion opinion
-                 })))
+                 :datetime (java.util.Date.)
+                 }))))
 
 
 ;  Views
 
 (defn get-book-impressions [book_id]
-  (with-collection db "impressions"
+  (map str_id
+    (with-collection db "impressions"
                    (find {:book_id (ObjectId. book_id)})
-                   (sort {:datetime -1})))
+                   (sort {:datetime -1}))))
 
 
 (defn get-book-insight [book_id]
