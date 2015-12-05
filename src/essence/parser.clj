@@ -22,5 +22,12 @@
   {:value {:name (get @state k)}})
 
 (defmethod readf :books [{:keys [state query]} k _]
-  {:value (map #(select-keys % query)  ;; TODO: use mongo filter here
-               (db/list-books))})
+  (letfn [(add-impression-count [book]
+            (if (contains? (set query) :impressions/count)
+              (assoc book :impressions/count (rand-int 25))
+              book))
+          (format-book [book]
+            (-> book
+                (select-keys query)   ;; TODO: use mongo filter here 
+                add-impression-count))]
+    {:value (mapv format-book (db/list-books))}))

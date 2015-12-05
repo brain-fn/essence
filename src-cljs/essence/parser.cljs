@@ -17,7 +17,8 @@
 
 (defmethod read :books
   [{:keys [state ast] :as env} k _]
-  (let [books (get @state k)]
+  (let [st @state
+        books (mapv #(get-in st %) (get st k))]
     {:value books
      :remote true
      :server ast}))

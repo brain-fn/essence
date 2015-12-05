@@ -21,11 +21,12 @@
 (defn head []
   [:head
    [:title "Essence"]
+   (page/include-css "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
    (page/include-css "css/style.css")])
 
 (defn wrap-page [& markup]
   (h/html (head)
-          [:body markup]))
+          [:body [:div {:class "container-fluid"} markup]]))
 
 (defn index [req]
   (wrap-page [:h1 "Essence"]

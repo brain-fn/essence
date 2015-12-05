@@ -1,2 +1,7 @@
-/* some style */
+#header,
+.row {
+  padding-bottom: 2rem;
+}
+
+.book .impressions { padding: 1rem 0; }
 
