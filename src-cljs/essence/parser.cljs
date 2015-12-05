@@ -10,7 +10,14 @@
 
 (defmethod read :app/user
   [{:keys [state ast] :as env} k _]
-  (let [st @state]
-    {:value (get st k)
+  (let [user (get @state k)]
+    {:value user
+     :remote true
+     :server ast}))
+
+(defmethod read :books
+  [{:keys [state ast] :as env} k _]
+  (let [books (get @state k)]
+    {:value books
      :remote true
      :server ast}))

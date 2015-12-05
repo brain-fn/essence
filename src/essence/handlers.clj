@@ -9,8 +9,7 @@
 
 (defn query 
   [{:keys [event id ?data ring-req ?reply-fn send-fn] :as msg}]
-  ; (println "MSG: ")
-  ; (clojure.pprint/pprint event)
+  (clojure.pprint/pprint event)
   (when (= id :essence/query)
     (let [whoami (friend/current-authentication ring-req)
           current-user (:identity whoami)
