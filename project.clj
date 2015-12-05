@@ -25,7 +25,12 @@
                 :source-paths ["src-cljs"]
                 :compiler {:output-to "resources/public/js/compiled/essence.js"
                            :main essence.core
+                           :jar true
                            :optimizations :advanced
                            :pretty-print false}}]}
   :figwheel {:css-dirs ["resources/public/css"]}
-  :main essence.core)
+  :hooks [leiningen.cljsbuild]
+  :aot [essence.core]
+  :main essence.core
+  :jar-name "essence.jar"
+  :uberjar-name "essence-standalone.jar")

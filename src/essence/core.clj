@@ -1,4 +1,5 @@
 (ns essence.core
+  (:gen-class)
   (:require [clojure.java.io :as io]
             [compojure.core :refer [defroutes GET]]
             [compojure.route :as route]
@@ -25,4 +26,7 @@
     (reset! server nil)))
 
 (defn -main []
-  (reset! server (httpkit/run-server #'app {:port 8080})))
+  (let [env (System/getenv)
+        port (read-string (get env "PORT" "8080"))]
+    (reset! server (httpkit/run-server #'app {:port port}))
+    (println (str "Server started on port " port))))
