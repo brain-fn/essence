@@ -200,11 +200,16 @@
 (defn get-idea-data [idea_id]
   (mc/find-one-as-map db "ideas" {:_id (ObjectId. idea_id)}))
 
+(defn save-idea [])
+
 
 ;  Books
 
 (defn get-book-data [book_id]
   (mc/find-one-as-map db "books" {:_id (ObjectId. book_id)}))
+
+(defn list-books
+  (mc/get-maps db "books"))
 
 
 ;  Impressions
