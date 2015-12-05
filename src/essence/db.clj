@@ -1,4 +1,4 @@
-(ns db
+(ns essence.db
   (:refer-clojure :exclude [sort find])
   (:require [monger.core :as mg]
             [monger.credentials :as mcred]
