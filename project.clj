@@ -5,10 +5,13 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
+
                  [compojure "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
                  [http-kit "2.1.18"]
-                 [com.novemberain/monger "3.0.0-rc2"]]
+                 [com.novemberain/monger "3.0.0-rc2"]
+
+                 [org.omcljs/om "1.0.0-alpha25"]]
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-2"]]
   :source-paths ["src" "src-cljs"]
