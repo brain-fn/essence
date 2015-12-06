@@ -60,7 +60,8 @@
     [:_id :opinion :rating])
   Object
   (render [this]
-    (let [{:keys [:_id :opinion :rating :userpic :user-can-rate]} (om/props this)]
+    (let [{:keys [:_id :opinion :rating :userpic]} (om/props this)
+          {:keys [:user-can-rate]} (om/get-computed this)]
          (dom/div #js {:className "row"}
                   (dom/div #js {:className "ol-xs-3 col-xs-offset-1 panel panel-default"}
                            (dom/div #js {:className "panel-body media"}
@@ -113,9 +114,8 @@
                          (dom/h4 nil idea-text))
 
                   (dom/p #js {:className "text-muted"} idea-note)
-                  ;(cljs.pprint/pprint impressions)
                   (dom/div #js {:className ""}
-                           (map impression impressions))
+                           (map #(impression (om/computed % {:user-can-rate user-can-rate})) impressions))
 
                   ;(dom/div nil (str  user-can-rate idea_id impressions-count impressions idea-rating))
                   ))))
