@@ -262,8 +262,12 @@
                          :authors authors
                          :goodreads-link goodreads-link})))
 
+(defn count-impressions-for-book [book_id]
+  (mc/count db "impressions" {:book_id (ObjectId. book_id)}))
+
 (defn list-books []
-  (map str_id ( mc/find-maps db "books"))
+  (map #(assoc % :impressions (count-impressions-for-book (:_id %)))
+    (map str_id ( mc/find-maps db "books")))
   )
 
   (defn can-rate?
