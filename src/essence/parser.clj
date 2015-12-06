@@ -76,3 +76,8 @@
 
 (defmethod readf :bad-for [{:keys [:book]} _ _]
   {:value (into [] (:bad-for book))})
+
+(defmethod mutate 'impression/rate [{:keys [state]} _ params]
+  (let [username (get @state :app/user)
+        {:keys [:id :sign]} params]
+    {:action (fn [] (db/prop-impression username id sign))}))

@@ -69,11 +69,21 @@
                                       (dom/img #js {:src userpic :width "40px" })
                                              (if user-can-rate
                                                (dom/div nil
-                                                        (dom/a  #js   {:href ( route->url :rate-up :id _id) }
+                                                        (dom/a
+                                                         #js {:onClick (fn []
+                                                                         (om/transact!
+                                                                          this
+                                                                          `[(impression/rate ~{:id _id :sign 1})]))
+                                                              :style #js {:cursor "pointer"}}
                                                           (dom/img #js {:src "/img/like.png"}))
-                                                        (dom/a  #js   {:href ( route->url :rate-down :id _id) }
+                                                        (dom/a
+                                                         #js {:onClick (fn []
+                                                                         (om/transact!
+                                                                          this
+                                                                          `[(impression/rate ~{:id _id :sign -1})]))
+                                                              :style #js {:cursor "pointer"}} 
                                                           (dom/img #js {:src "/img/dislike.png"})))
-                                               (dom/p nil (str user-can-rate "Login to rate"))))
+                                               (dom/p nil "Login to rate")))
 
                                     (dom/div #js {:className "media-body"}
                                              (dom/p nil (str rating "   " opinion))))
@@ -110,15 +120,11 @@
   (render [this]
     (let [{:keys [idea-text idea-note user-can-rate idea_id impressions-count impressions idea-rating]} (-> this om/props)]
          (dom/div nil
-                  (dom/a  #js   {:href ( route->url :idea/by-id :id idea_id) }
-                         (dom/h4 nil idea-text))
-
+                  (dom/a  nil (dom/h4 nil idea-text))
                   (dom/p #js {:className "text-muted"} idea-note)
-                  (dom/div #js {:className ""}
-                           (map #(impression (om/computed % {:user-can-rate user-can-rate})) impressions))
-
-                  ;(dom/div nil (str  user-can-rate idea_id impressions-count impressions idea-rating))
-                  ))))
+                  (dom/p #js {:className "text-muted"} (str "Rating: " idea-rating))
+                  (dom/div nil
+                           (map #(impression (om/computed % {:user-can-rate user-can-rate})) impressions))))))
 
 (def comparable (om/factory Comparable))
 

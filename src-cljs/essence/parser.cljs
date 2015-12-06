@@ -67,3 +67,7 @@
   (when (nil? target)
     {:value {:keys [:route]}
      :action (fn [] (swap! state assoc :route params))}))
+
+(defmethod mutate 'impression/rate
+  [{:keys [state target]} _ params]
+  {:server true})
