@@ -221,6 +221,10 @@
     (mc/find-one-as-map db "users" {:_id (ObjectId. user_id)}))
   )
 
+(defn get-user-data-by-name [username]
+  (str_id
+    (mc/find-one-as-map db "users" {:username username})))
+
 (defn get-user-from-name [username]
   (str_id (mc/find-one-as-map db "users" {:username username}))
   )
@@ -364,9 +368,9 @@
                  :datetime (java.util.Date.)
                  }))))
 
-(defn prop-impression [user_id impression_id prop-sign]
+(defn prop-impression [username impression_id prop-sign]
   (let [impression (get-impression-data impression_id)
-        user (get-user-data user_id)]
+        user (get-user-data-by-name username)]
     (if (can-rate? (:username user) impression_id)
       (mc/insert db "impressions" (assoc impression
                                     :username (:username user)
