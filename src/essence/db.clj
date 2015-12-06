@@ -373,6 +373,10 @@
         user (get-user-data-by-name username)]
     (if (can-rate? (:username user) impression_id)
       (mc/insert db "impressions" (assoc impression
+                                    :book_id (ObjectId. (:book_id impression))
+                                    :_id (ObjectId. (:_id impression))
+                                    :idea_id (ObjectId. (:idea_id impression))
+                                    :user_id (ObjectId. (:_id user))
                                     :username (:username user)
                                     :user_id (:_id user)
                                     :userpic (:userpic user)
