@@ -27,9 +27,9 @@
   (render [this]
           (let [{:keys [name authors year cover goodreads-link _id impressions] :as props} (om/props this)]
             (dom/div #js {:className "row book"}
-              (dom/div #js {:className "col-xs-1"}
+              (dom/div #js {:className "col-xs-1 col-xs-offset-3"}
                 (dom/img #js {:src cover :width "100px"}))
-              (dom/div #js {:className "col-xs-11"}
+              (dom/div #js {:className "col-xs-8"}
                 (dom/a #js {:href (route->url :books/by-id :id _id)}
                   (dom/div nil (dom/strong nil name)))
                 (dom/div nil authors)
