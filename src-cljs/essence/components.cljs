@@ -90,8 +90,13 @@
     [:_id :idea-note])
   Object
   (render [this]
-    (let [{:keys [idea-note]} (-> this om/props)]
-      (dom/div nil idea-note))))
+    (let [{:keys [idea-text idea-note user-can-rate idea_id impressions-count impressions idea-rating]} (-> this om/props)]
+         (dom/div nil
+                  (dom/a #js {:href ( route->url :idea/by-id :id idea_id) }
+                         (dom/h4 nil idea-text))
+
+                  (dom/p #js {:class "text-muted"} idea-note)
+          (dom/div nil user-can-rate idea_id impressions-count impressions idea-rating)))))
 
 (def comparable (om/factory Comparable))
 
@@ -124,17 +129,33 @@
   (render [this]
     (let [props (om/props this)
           book (-> props vals first)
-          {:keys [name ideas good-for bad-for]} book]
+          {:keys [name authors year cover goodreads-link impressions ideas good-for bad-for]} book]
       (dom/div nil
-        (dom/strong nil name)
-        (dom/div nil "Ideas")
-        (map idea ideas)
-        (dom/hr nil)
-        (dom/div nil "Good For")
-        (map comparable good-for)
-        (dom/hr nil)
-        (dom/div nil "Bad For")
-        (map comparable bad-for)))))
+               (dom/div #js {:className "row book" }
+                        (dom/div #js {:className "col-xs-1 col-xs-offset-4" }
+                                 (dom/img #js {:src cover :width "80px" }))
+                        (dom/div #js {:className "col-xs-4" }
+                                        (dom/div nil ( dom/strong nil name)
+                                                 (dom/span #js {:className "text-muted" } ( str " (" year ")")))
+                                 (dom/div #js {:className "small" } ( str "by " authors))
+                                 (dom/div #js {:className "pull-right" }
+                                          (dom/a #js {:href goodreads-link} "Book on Goodreads" ))
+                                 (dom/div #js {:className "impressions" }
+                                          (str "Impressions: " impressions))))
+               (dom/div #js {:className "row" }
+                        (dom/div #js {:className "col-xs-5 col-xs-offset-4" }
+                                 (dom/h2 nil "Ideas")
+                          (map idea ideas))
+                        (dom/hr nil))
+               (dom/div #js {:className "row" }
+                        (dom/div #js {:className "col-xs-5 col-xs-offset-2" }
+                                 (dom/h2 nil "Good For")
+                                 (map comparable good-for))
+                        (dom/div #js {:className "col-xs-5" }
+                                 (dom/h2 nil "Bad For")
+                                 (map comparable bad-for))
+                        ))
+         )))
 
 (def book-list-q (om/get-query BookList))
 
