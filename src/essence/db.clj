@@ -402,4 +402,3 @@
 ;(get-book-insight "5662ee29505e7c5d71a9aba6")
 ; (in-ns 'essence.db) (require '[clojure.pprint :refer [pprint]])
 ; (def idea "5662ee29505e7c5d71a9aba9") (def book_Brave "5662ee29505e7c5d71a9aba5")
-

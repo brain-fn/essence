@@ -5,15 +5,15 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
-
                  [compojure "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
                  [http-kit "2.1.18"]
                  [hiccup "1.0.5"]
                  [com.cemerick/friend "0.2.1" :exclusions [org.clojure/core.cache]]
                  [com.taoensso/sente "1.6.0"]
+                 [bidi "1.21.1"]
+                 [kibu/pushy "0.3.6"]
                  [com.novemberain/monger "3.0.0-rc2"]
-
                  [org.omcljs/om "1.0.0-alpha25"]]
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-2"]]

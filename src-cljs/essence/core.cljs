@@ -2,9 +2,11 @@
   (:require [clojure.string :as string]
             [cljs.pprint :refer [pprint]]
             [om.next :as om]
+            [bidi.bidi :refer [match-route path-for]]
+            [pushy.core :as pushy]
             [taoensso.sente :as sente :refer (cb-success?)]
             [essence.parser :refer [parser]]
-            [essence.components :refer [App]]))
+            [essence.components :refer [App routes route->query]]))
 
 (enable-console-print!)
 
@@ -44,6 +46,26 @@
                   :send send-to-server
                   :remotes [:server]}))
 
+(defn route-dispatch! [match]
+  (pprint (str "ROTE_DISPATCH: " match))
+  (let [{:keys [handler route-params] :as route} match
+        app (om/class->any reconciler App)]
+    (when app
+      (let [new-query (route->query handler)
+            query (mapv (fn [q]
+                          (if (and (map? q) (contains? (set (keys q)) :subquery))
+                            (assoc q :subquery new-query)
+                            q))
+                        (om/get-query app))]
+        (om/set-query! app {:query query :params route-params})))
+    (om/transact! reconciler `[(route/set ~route)
+                               :route])))
+
+(def history
+  (pushy/pushy route-dispatch! (partial match-route routes)))
+
+(pushy/start! history)
+
 (defmethod ws-handler :default
   [{:keys [event] :as msg}]
   (pprint event))
@@ -52,5 +74,7 @@
   ;; mount Om after ws connection is established
   (om/add-root! reconciler
                 App
-                (.. js/document (getElementById "app"))))
-
+                (.. js/document (getElementById "app")))
+  ;; dispatch current path (for figwheel autoreload)
+  (let [path (.-pathname (.-location js/document))]
+    (route-dispatch! (match-route routes path))))
