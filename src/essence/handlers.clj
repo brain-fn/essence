@@ -58,9 +58,20 @@
               [:div {:class "col-md-4 col-md-offset-3"}
                [:img {:src "img/animation.gif"}]]]
              [:div {:class "row"}
-              [:div
+              [:div {:class "col-md-6 col-md-offset-3"}
                [:p {:class " text-center"}
-                [:a {:href "/app/" :class"btn btn-primary" :role "button"} "Look Inside a Book!"]]]]))
+                [:a {:href "/app/" :class"btn btn-primary" :role "button"} "Look Inside a Book!"]]
+               [:p
+                [:div {:class "well"}
+                 [:p
+                  "We've called it \"Essence\" because it represents the idea of the main points, ideas and topics that books consist of. We wanted to make a \"ideas\" browser - once you've seen an curious idea in the book, you want to see where more that idea can be found."
+                   [:br]
+                  "Or you want to compare books by some property or topic coverage. " [:br]]
+                 [:p
+                  "\nWhat book about Clojure is best for beginners? " [:br]
+                  "What for advanced coders? " [:br]
+                  "Is that book practical or conceptual? " [:br]
+                  "Fun or dull?"]]]]]))
 
 (defn app-handler [req]
   (wrap-page req
