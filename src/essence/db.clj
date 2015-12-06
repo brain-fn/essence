@@ -239,6 +239,9 @@
   (str_id (mc/find-one-as-map db "ideas" {:_id (ObjectId. idea_id)}))
   )
 
+(defn get-idea-impressions [idea_id]
+  (str_id (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)}))
+
 (defn add-idea [type text note]
   (str_id (mc/insert db "ideas" {:type type
                                  :text text
@@ -262,25 +265,35 @@
   (map str_id ( mc/find-maps db "books"))
   )
 
-(defn get-book-ideas [book_id]
-  (map (fn [[_id imprs]]
+  (defn can-rate? [username book_id idea_id]
+    (if (nil? username) nil
+                       (empty? (mc/find-one db "impressions" {:book_id book_id
+                                                              :idea_id idea_id
+                                                              :username username}))))
+
+(defn get-book-ideas
+  ([book_id] (get-book-ideas book_id nil))
+  ([book_id username]
+    (map (fn [[_id imprs]]
          {:idea_id _id
           :idea-text (:idea-text (first imprs))
           :idea-note (:idea-note (first imprs))
           :impressions-count (count imprs)
-          :impressions imprs})
-  (group-by :idea_id
-    (map str_id (mc/find-maps db "impressions" {:idea-type :idea
-                                              :book_id (ObjectId. book_id)
-                                        } [:rating :idea-text :idea-note :idea_id])))))
+          :impressions imprs
+          :user-can-rate (can-rate? username (:book_id (first imprs)) _id)})
+    (group-by :idea_id
+      (map str_id (mc/find-maps db "impressions" {:idea-type :idea
+                                                  :book_id (ObjectId. book_id)
+                                        } [:rating :idea-text :idea-note :idea_id]))))))
 
-(defn wrap-comps [[_id comps]]
+(defn wrap-comps [username [_id comps]]
   {:idea_id _id
    :idea-text (:idea-text (first comps))
    :idea-note (:idea-note (first comps))
    :idea-rating (reduce + (map :rating comps) )
    :impressions-count (count comps)
-   :impressions comps})
+   :impressions comps
+   :user-can-rate (can-rate? username (:book_id (first comps)) _id)})
 
 (defn rating-comp [x y]
   (let [c (> (:idea-rating x) (:idea-rating y))]
@@ -291,21 +304,24 @@
 (defn sort-comps [comps]
   (sort-by :idea-rating comps ))
 
-(defn get-book-good-for [book_id]
+(defn get-book-good-for
+  ([book_id] (get-book-good-for nil book_id) )
+  ([username book_id]
   (sort-comps
-    (map wrap-comps
+    (map (partial wrap-comps username)
          (group-by :idea_id
                    (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
                                                                :book_id (ObjectId. book_id)
                                                                :rating { $gte 0}}
                                              [:rating :idea-text :idea-note :idea_id])))
                     )
-               ))
-(defn get-book-bad-for [book_id]
-
+               )))
+(defn get-book-bad-for
+  ([book_id] (get-book-bad-for nil book_id) )
+  ([username book_id]
   ;(reverse
     (sort-comps
-      (map wrap-comps
+      (map (partial wrap-comps username)
            (group-by :idea_id
                      (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
                                                                  :book_id   (ObjectId. book_id)
@@ -313,9 +329,8 @@
                                                [:rating :idea-text :idea-note :idea_id])))
            )
       )
-
   ; )
-  )
+  ))
 
 ;  Impressions
 
@@ -359,8 +374,7 @@
 
 (defn get-idea [idea_id]
   (assoc (get-idea-data idea_id) :impressions
-                                 (map str_id
-                                      (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)})))
+                                 (get-idea-impressions idea_id))
   )
 
 
