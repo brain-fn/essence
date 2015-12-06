@@ -36,12 +36,16 @@
                      [:img {:src "img/Essence_logo_small.png"
                             :style "padding-top:5px"}]]
                     [:ui {:class "navbar-nav nav navbar-right"}
+                     (if-not (get-current-user req)
+                      [:li {:style "padding-top:10px;padding-right:10px"}
+                        [:span "Pick a username -> "]])
                      [:li
                       [:div {:style "height:30px; padding-top:10px; margin-right:10px"}
                        (if-let [user (get-current-user req)]
                          [:span
                           (str "Welcome, " user "! ")
                           [:a {:href "/logout"} "Log Out"]]
+
                          (form/form-to [:post "/login"]
                                        (anti-forgery-field)
                                        (form/text-field "username")
