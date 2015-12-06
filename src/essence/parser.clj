@@ -64,8 +64,9 @@
   {:value (into [] (db/get-book-impressions (:_id book)))})
 
 (defmethod readf :book-insights/by-id [{:keys [state ast query] :as env} k _]
-  (let [id (nth (:key ast) 1)]
-    {:value (format-book (db/get-book-insight id ) env)}))
+  (let [id (nth (:key ast) 1)
+        username (get @state :app/user)]
+    {:value (format-book (db/get-book-insight id username) env)}))
 
 (defmethod readf :ideas [{:keys [:book]} _ _]
   {:value (into [] (:ideas book))})
