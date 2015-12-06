@@ -44,14 +44,23 @@
                            impr-q))
                   impressions))))
 
-(defmethod read :books/by-id
-  [{:keys [state ast query] :as env} k params]
+(defn get-book-by-id [{:keys [state ast query] :as env} subqueries]
   (let [st @state
         book (-> (by-ident st (:key ast))
                  vals
                  ffirst
-                 (select-keys (conj query :impressions)))]
-    {:value (assoc book :impressions (resolve-impressions st (:impressions book) query))}))
+                 (select-keys (into [] (concat query subqueries))))]
+    book))
+
+(defmethod read :books/by-id
+  [{:keys [state ast query] :as env} k params]
+  (let [book (get-book-by-id env [:impressions])]
+    {:value (assoc book :impressions (resolve-impressions @state (:impressions book) query))}))
+
+(defmethod read :book-insights/by-id
+  [{:keys [state ast query] :as env} k params]
+  (let [book (get-book-by-id env [:ideas :good-for :bad-for])]
+    {:value book}))
 
 (defmethod mutate 'route/set
   [{:keys [state target]} _ params]

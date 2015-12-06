@@ -29,16 +29,26 @@
   (let [joins (filter map? query)]
     (mapv #(parser (merge env params) [%]) joins)))
 
-(defn add-impression-count [book query]
-  (if (has-subquery? query :impressions/count)
-    (assoc book :impressions/count (rand-int 25))
-    book))
+(defn join-key [expr]
+  (-> expr vec ffirst))
+
+(defn join? [expr]
+  (and (map? expr)
+       (= 1 (count expr))
+       (keyword? (join-key expr))))
+
+(defn joins-to-keywords [query]
+  (letfn [(change [expr]
+            (if (join? expr)
+              (join-key expr)
+              expr))]
+    (map change query)))
 
 (defn format-book [book {:keys [:query] :as env}]
-  (let [sub (subjoins env {:book-id (:_id book)})
+  (let [sub (subjoins env {:book book})
         book (-> book
-                 (select-keys query)   ;; TODO: use mongo filter here 
-                 (add-impression-count query))]
+                 (select-keys (joins-to-keywords query))   ;; TODO: use mongo filter here
+                 )]
     (if (empty? sub)
       book
       (into [] (map #(merge book %) sub)))))
@@ -50,5 +60,18 @@
   (let [id (nth (:key ast) 1)]
     {:value (format-book (db/get-book-data id) env)}))
 
-(defmethod readf :impressions [{:keys [:query :book-id]} _ _]
-  {:value (into [] (db/get-book-impressions book-id))})
+(defmethod readf :impressions [{:keys [:query :book]} _ _]
+  {:value (into [] (db/get-book-impressions (:_id book)))})
+
+(defmethod readf :book-insights/by-id [{:keys [state ast query] :as env} k _]
+  (let [id (nth (:key ast) 1)]
+    {:value (format-book (db/get-book-insight id) env)}))
+
+(defmethod readf :ideas [{:keys [:book]} _ _]
+  {:value (into [] (:ideas book))})
+
+(defmethod readf :good-for [{:keys [:book]} _ _]
+  {:value (into [] (:good-for book))})
+
+(defmethod readf :bad-for [{:keys [:book]} _ _]
+  {:value (into [] (:bad-for book))})
