@@ -240,7 +240,7 @@
   )
 
 (defn get-idea-impressions [idea_id]
-  (str_id (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)}))
+  (str_id (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)})))
 
 (defn add-idea [type text note]
   (str_id (mc/insert db "ideas" {:type type
