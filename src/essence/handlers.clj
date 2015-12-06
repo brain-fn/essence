@@ -26,15 +26,37 @@
 
 (defn wrap-page [& markup]
   (h/html (head)
-          [:body [:div {:class "container-fluid"} markup]]))
+          [:body [:div {:class "container-fluid" :id "wrap"}
+                  [:nav {:class "navbar navbar-default"
+                         :role "navigation"}
+                    [:div {:class "collapse navbar-collapse navbar-ex1-collapse"}
+                     [:a {:href "/"}
+                      [:img {:src "img/Essence_logo_small.png"
+                            :style "padding-top:5px"}]]
+                     [:ui {:class "navbar-nav nav navbar-right"}
+                      [:li [:a {:href "/app/"} "look inside"]]
+                      [:li
+                       [:div {:style "height:30px; padding-top:10px; margin-right:10px"}
+                        (form/form-to [:post "/login"]
+                                      (anti-forgery-field)
+                                      (form/text-field "username")
+                                      (form/submit-button "Sign In"))
+                        ]]
+                      ]
+                      ]]
+                  markup]]))
 
 (defn index [req]
-  (wrap-page [:h1 "Essence"]
-             [:p [:a {:href "/app/"} "Look Inside a Book!"]]
-             (form/form-to [:post "/login"]
-                           (anti-forgery-field)
-                           (form/text-field "username")
-                           (form/submit-button "Sign In"))))
+  (wrap-page
+             [:div {:class "row"}
+              [:div {:class "col-md-4 col-md-offset-3"}
+                [:img {:src "img/animation.gif"}]
+                ]
+              ]
+             [:div {:class "row"}
+              [:div
+               [:p {:class " text-center"}
+                [:a {:href "/app/" :class"btn btn-primary" :role "button"} "Look Inside a Book!"]]]]))
 
 (defn app-handler [req]
   (wrap-page [:div {:id "app"}]
