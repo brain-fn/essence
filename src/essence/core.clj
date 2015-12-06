@@ -26,6 +26,7 @@
   (GET "/" [] handlers/index)
   (GET "/app/" [] handlers/app-handler)
   (POST "/query" [] handlers/query)
+  (GET "/logout" [] handlers/logout)
   (GET  "/ws" req (ring-ajax-get-or-ws-handshake req))
   (POST "/ws" req (ring-ajax-post                req))
   (route/resources "/app/")

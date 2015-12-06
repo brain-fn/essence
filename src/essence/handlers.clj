@@ -84,3 +84,5 @@
       resp/response
       (resp/status 401)))
 
+(defn logout [req]
+  (friend/logout* (resp/redirect (str (:context req) "/"))))
