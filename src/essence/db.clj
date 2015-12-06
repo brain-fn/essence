@@ -240,7 +240,8 @@
   )
 
 (defn get-idea-impressions [idea_id]
-  (str_id (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)})))
+  (str_id (mc/find-maps db "impressions" {:idea_id (ObjectId. idea_id)
+                                          :opinion {$ne nil}})))
 
 (defn add-idea [type text note]
   (str_id (mc/insert db "ideas" {:type type
@@ -285,7 +286,7 @@
           :idea-text (:idea-text (first imprs))
           :idea-note (:idea-note (first imprs))
           :impressions-count (count imprs)
-          :impressions imprs
+          :impressions (filter #(nil? (:opinion %)) imprs)
           :user-can-rate (can-rate? username (:book_id (first imprs)) _id)})
     (group-by :idea_id
       (map str_id (mc/find-maps db "impressions" {:idea-type :idea
@@ -335,7 +336,8 @@
 ;  Impressions
 
 (defn get-impression-data [impression_id]
-  (str_id (mc/find-one-as-map db "impressions" {:_id (ObjectId. impression_id)})))
+  (str_id (mc/find-one-as-map db "impressions" {:_id (ObjectId. impression_id)
+                                                :opinion {$ne nil}})))
 
 (defn add-impression [user_id idea_id book_id rating opinion]
   (let [user (get-user-data user_id)
@@ -376,7 +378,8 @@
 (defn get-book-impressions [book_id]
   (map str_id
     (with-collection db "impressions"
-                   (find {:book_id (ObjectId. book_id)})
+                   (find {:book_id (ObjectId. book_id)
+                          :opinion {$ne nil}})
                    (sort {:datetime -1}))))
 
 (defn get-book-insight
