@@ -22,10 +22,10 @@
     [:books/by-id (:_id props)])
   static om/IQuery
   (query [this]
-    [:_id :name :year :cover :authors :goodreads-link :impressions/count])
+    [:_id :name :year :cover :authors :goodreads-link :impressions])
   Object
   (render [this]
-          (let [{:keys [name authors year cover goodreads-link _id] :as props} (om/props this)]
+          (let [{:keys [name authors year cover goodreads-link _id impressions] :as props} (om/props this)]
             (dom/div #js {:className "row book"}
               (dom/div #js {:className "col-xs-1"}
                 (dom/img #js {:src cover :width "100px"}))
@@ -34,7 +34,7 @@
                   (dom/div nil (dom/strong nil name)))
                 (dom/div nil authors)
                 (dom/div #js {:className "impressions"}
-                  (str "Impressions: " (:impressions/count props)))
+                  (str "Impressions: " impressions))
                 (dom/div #js {:className "text-muted"} (str "published " year))
                 (dom/div nil
                   (dom/a #js {:href goodreads-link} "Book on Goodreads")))))))
