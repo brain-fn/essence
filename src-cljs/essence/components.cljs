@@ -27,17 +27,18 @@
   (render [this]
           (let [{:keys [name authors year cover goodreads-link _id impressions] :as props} (om/props this)]
             (dom/div #js {:className "row book"}
-              (dom/div #js {:className "col-xs-1 col-xs-offset-3"}
-                (dom/img #js {:src cover :width "100px"}))
-              (dom/div #js {:className "col-xs-8"}
+              (dom/div #js {:className "col-xs-1 col-xs-offset-4"}
+                (dom/img #js {:src cover :width "80px"}))
+              (dom/div #js {:className "col-xs-4"}
                 (dom/a #js {:href (route->url :books/by-id :id _id)}
-                  (dom/div nil (dom/strong nil name)))
-                (dom/div nil authors)
+                  (dom/div nil (dom/strong nil name)
+                           (dom/span #js {:className "text-muted"} (str " (" year ")"))       )
+                       )
+                (dom/div #js {:className "small"} (str "by " authors))
+                       (dom/div #js {:className "pull-right"}
+                                (dom/a #js {:href goodreads-link} "Book on Goodreads"))
                 (dom/div #js {:className "impressions"}
-                  (str "Impressions: " impressions))
-                (dom/div #js {:className "text-muted"} (str "published " year))
-                (dom/div nil
-                  (dom/a #js {:href goodreads-link} "Book on Goodreads")))))))
+                  (str "Impressions: " impressions)))))))
 
 (def book (om/factory Book))
 
