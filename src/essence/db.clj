@@ -303,7 +303,7 @@
    :idea-note (:idea-note (first comps))
    :idea-rating (reduce + (map :rating comps) )
    :impressions-count (count comps)
-   :impressions (filter #(nil? (:opinion %)) comps)
+   :impressions  (filter #(not (nil? (:opinion %))) comps)
    :user-can-rate (can-rate? username (:book_id (first comps)) _id)})
 
 (defn sort-comps [comps]
@@ -404,5 +404,5 @@
 
 
 ;(get-book-insight "5662ee29505e7c5d71a9aba6")
-; (in-ns 'essence.db) (require '[clojure.pprint :refer [pprint]])
+  ; (in-ns 'essence.db) (require '[clojure.pprint :refer [pprint]])
 ; (def idea "5662ee29505e7c5d71a9aba9") (def book_Brave "5662ee29505e7c5d71a9aba5")

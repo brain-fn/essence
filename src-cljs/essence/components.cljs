@@ -87,16 +87,18 @@
     [:comparable/by-id (:_id props)])
   static om/IQuery
   (query [this]
-    [:_id :idea-note])
+    [:_id :idea-note :impressions])
   Object
   (render [this]
     (let [{:keys [idea-text idea-note user-can-rate idea_id impressions-count impressions idea-rating]} (-> this om/props)]
          (dom/div nil
-                  (dom/a #js {:href ( route->url :idea/by-id :id idea_id) }
+                  (dom/a   nil                                 ;#js                                {:href ( route->url :idea/by-id :id idea_id) }
                          (dom/h4 nil idea-text))
 
-                  (dom/p #js {:class "text-muted"} idea-note)
-          (dom/div nil user-can-rate idea_id impressions-count impressions idea-rating)))))
+                  (dom/p #js {:className "text-muted"} idea-note)
+                  ;(cljs.pprint/pprint impressions)
+                  (map impression impressions)
+          (dom/div nil (str  user-can-rate idea_id impressions-count impressions idea-rating))))))
 
 (def comparable (om/factory Comparable))
 
@@ -146,7 +148,7 @@
                         (dom/div #js {:className "col-xs-5 col-xs-offset-4" }
                                  (dom/h2 nil "Ideas")
                           (map idea ideas))
-                        (dom/hr nil))
+                        )                                   ;(dom/hr nil)
                (dom/div #js {:className "row" }
                         (dom/div #js {:className "col-xs-5 col-xs-offset-2" }
                                  (dom/h2 nil "Good For")
