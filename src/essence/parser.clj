@@ -65,7 +65,7 @@
 
 (defmethod readf :book-insights/by-id [{:keys [state ast query] :as env} k _]
   (let [id (nth (:key ast) 1)]
-    {:value (format-book (db/get-book-insight id) env)}))
+    {:value (format-book (db/get-book-insight id ) env)}))
 
 (defmethod readf :ideas [{:keys [:book]} _ _]
   {:value (into [] (:ideas book))})

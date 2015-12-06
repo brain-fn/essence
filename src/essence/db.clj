@@ -318,7 +318,7 @@
                      (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
                                                                  :book_id (ObjectId. book_id)
                                                                  :rating { $gte 0}}
-                                               [:rating :opinion :idea-text :idea-note :idea_id  :book_id])))
+                                               [:rating :opinion :idea-text :idea-note :idea_id :userpic :book_id])))
                     )
                )))
 (defn get-book-bad-for

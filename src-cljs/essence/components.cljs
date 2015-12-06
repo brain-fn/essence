@@ -60,8 +60,25 @@
     [:_id :opinion :rating])
   Object
   (render [this]
-    (let [{:keys [:_id :opinion :rating]} (om/props this)]
-      (dom/p nil (str rating "   " opinion)))))
+    (let [{:keys [:_id :opinion :rating :userpic :user-can-rate]} (om/props this)]
+         (dom/div #js {:className "row"}
+                  (dom/div #js {:className "ol-xs-3 col-xs-offset-1 panel panel-default"}
+                           (dom/div #js {:className "panel-body media"}
+                                    (dom/div #js {:className "media-left"}
+                                      (dom/img #js {:src userpic :width "40px" })
+                                             (if user-can-rate
+                                               (dom/div nil
+                                                        (dom/a  #js   {:href ( route->url :rate-up :id _id) }
+                                                          (dom/img #js {:src "/img/like.png"}))
+                                                        (dom/a  #js   {:href ( route->url :rate-down :id _id) }
+                                                          (dom/img #js {:src "/img/dislike.png"})))
+                                               (dom/p nil (str user-can-rate "Login to rate"))))
+
+                                    (dom/div #js {:className "media-body"}
+                                             (dom/p nil (str rating "   " opinion))))
+                           )
+                  )
+      )))
 
 (def impression (om/factory Impression))
 
@@ -92,13 +109,16 @@
   (render [this]
     (let [{:keys [idea-text idea-note user-can-rate idea_id impressions-count impressions idea-rating]} (-> this om/props)]
          (dom/div nil
-                  (dom/a   nil                                 ;#js                                {:href ( route->url :idea/by-id :id idea_id) }
+                  (dom/a  #js   {:href ( route->url :idea/by-id :id idea_id) }
                          (dom/h4 nil idea-text))
 
                   (dom/p #js {:className "text-muted"} idea-note)
                   ;(cljs.pprint/pprint impressions)
-                  (map impression impressions)
-          (dom/div nil (str  user-can-rate idea_id impressions-count impressions idea-rating))))))
+                  (dom/div #js {:className ""}
+                           (map impression impressions))
+
+                  ;(dom/div nil (str  user-can-rate idea_id impressions-count impressions idea-rating))
+                  ))))
 
 (def comparable (om/factory Comparable))
 
