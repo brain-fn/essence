@@ -265,11 +265,17 @@
   (map str_id ( mc/find-maps db "books"))
   )
 
-  (defn can-rate? [username book_id idea_id]
-    (if (nil? username) nil
-                       (empty? (mc/find-one db "impressions" {:book_id book_id
-                                                              :idea_id idea_id
-                                                              :username username}))))
+  (defn can-rate?
+    ([username impression_id]
+     (if (nil? username) nil
+                         (empty? (mc/find-one db "impressions" {:_id (ObjectId. impression_id)
+                                                                :username username}))
+                         ))
+    ([username book_id idea_id]
+      (if (nil? username) nil
+                       (empty? (mc/find-one db "impressions" {:book_id (ObjectId. book_id)
+                                                              :idea_id (ObjectId. idea_id)
+                                                              :username username})))))
 
 (defn get-book-ideas
   ([book_id] (get-book-ideas book_id nil))
@@ -284,7 +290,7 @@
     (group-by :idea_id
       (map str_id (mc/find-maps db "impressions" {:idea-type :idea
                                                   :book_id (ObjectId. book_id)
-                                        } [:rating :idea-text :idea-note :idea_id]))))))
+                                        } [:rating :idea-text :idea-note :idea_id :book_id]))))))
 
 (defn wrap-comps [username [_id comps]]
   {:idea_id _id
@@ -295,30 +301,24 @@
    :impressions comps
    :user-can-rate (can-rate? username (:book_id (first comps)) _id)})
 
-(defn rating-comp [x y]
-  (let [c (> (:idea-rating x) (:idea-rating y))]
-    (if (not= c 0)
-      c
-      (> x y))))
-
 (defn sort-comps [comps]
   (sort-by :idea-rating comps ))
 
 (defn get-book-good-for
-  ([book_id] (get-book-good-for nil book_id) )
-  ([username book_id]
+  ([book_id] (get-book-good-for book_id nil ) )
+  ([book_id username]
   (sort-comps
-    (map (partial wrap-comps username)
-         (group-by :idea_id
-                   (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
-                                                               :book_id (ObjectId. book_id)
-                                                               :rating { $gte 0}}
-                                             [:rating :idea-text :idea-note :idea_id])))
+      (map (partial wrap-comps username)
+           (group-by :idea_id
+                     (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
+                                                                 :book_id (ObjectId. book_id)
+                                                                 :rating { $gte 0}}
+                                               [:rating :idea-text :idea-note :idea_id  :book_id])))
                     )
                )))
 (defn get-book-bad-for
-  ([book_id] (get-book-bad-for nil book_id) )
-  ([username book_id]
+  ([book_id] (get-book-bad-for book_id nil ) )
+  ([book_id username]
   ;(reverse
     (sort-comps
       (map (partial wrap-comps username)
@@ -326,7 +326,7 @@
                      (map str_id (mc/find-maps db "impressions" {:idea-type :comparable
                                                                  :book_id   (ObjectId. book_id)
                                                                  :rating    {$lte 0}}
-                                               [:rating :idea-text :idea-note :idea_id])))
+                                               [:rating :idea-text :idea-note :idea_id :book_id])))
            )
       )
   ; )
@@ -334,19 +334,22 @@
 
 ;  Impressions
 
+(defn get-impression-data [impression_id]
+  (str_id (mc/find-one-as-map db "impressions" {:_id (ObjectId. impression_id)})))
+
 (defn add-impression [user_id idea_id book_id rating opinion]
   (let [user (get-user-data user_id)
         idea (get-idea-data idea_id)
         book (get-book-data book_id)]
     (str_id (mc/insert db "impressions"
-                {:user_id user_id
+                {:user_id (:_id user)
                  :username (:username user)
                  :userpic (:userpic user)
-                 :idea_id idea_id
+                 :idea_id (:_id idea)
                  :idea-type (:idea-type idea)
                  :idea-text (:idea-text idea)
                  :idea-note (:idea-note idea)
-                 :book_id book_id
+                 :book_id (:_id book)
                  :book-name (:book-name book)
                  :book-year (:book-year book)
                  :book-cover (:book-cover book)
@@ -355,6 +358,18 @@
                  :datetime (java.util.Date.)
                  }))))
 
+(defn prop-impression [user_id impression_id prop-sign]
+  (let [impression (get-impression-data impression_id)
+        user (get-user-data user_id)]
+    (if (can-rate? (:username user) impression_id)
+      (mc/insert db "impressions" (assoc impression
+                                    :username (:username user)
+                                    :user_id (:_id user)
+                                    :userpic (:userpic user)
+                                    :opinion nil
+                                    :rating (if (pos? prop-sign) 1 -1)
+                                    :datetime (java.util.Date.)))
+      )))
 
 ;  Views
 
@@ -364,13 +379,15 @@
                    (find {:book_id (ObjectId. book_id)})
                    (sort {:datetime -1}))))
 
-(defn get-book-insight [book_id]
+(defn get-book-insight
+  ([book_id] (get-book-insight book_id nil))
+  ([book_id username]
   ; some representation of ideas that are in the book
-  (assoc (get-book-data book_id)
-    :ideas (get-book-ideas book_id)
-    :good-for (get-book-good-for book_id)
-    :bad-for (get-book-bad-for book_id))
-  )
+  (assoc (get-book-data book_id )
+    :ideas (get-book-ideas book_id username)
+    :good-for (get-book-good-for book_id username)
+    :bad-for (get-book-bad-for book_id username)
+  )))
 
 (defn get-idea [idea_id]
   (assoc (get-idea-data idea_id) :impressions
@@ -380,3 +397,5 @@
 
 
 ;(get-book-insight "5662ee29505e7c5d71a9aba6")
+; (in-ns 'essence.db) (require '[clojure.pprint :refer [pprint]])
+; (def idea "5662ee29505e7c5d71a9aba9") (def book_Brave "5662ee29505e7c5d71a9aba5")
