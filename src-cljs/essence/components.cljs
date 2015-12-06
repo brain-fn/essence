@@ -3,22 +3,6 @@
             [om.next :as om :refer-macros [defui]]
             [om.dom :as dom]))
 
-(defui Header
-  static om/IQuery
-  (query [this]
-    [:name])
-  Object
-  (render [this]
-    (let [{:keys [:name]} (om/props this)]
-      (dom/div #js {:className "row" :id "header"}
-        (dom/div #js {:className "col-xs-12"}
-          (str "Welcome, " (or name "stranger") "! ")
-          (if-not name
-            (dom/a #js {:href "/"} "Log In")
-            (dom/a #js {:href "/logout"} "Log Out")))))))
-
-(def header (om/factory Header))
-
 (defui Book
   static om/Ident
   (ident [this props]
@@ -65,12 +49,11 @@
   static om/IQuery
   (query [this]
     `[:route
-      {:app/user ~(om/get-query Header)}
+      {:app/user [:name]}
       {:subquery ?subquery}])
   Object
   (render [this]
     (let [route (-> this om/props :route)
           factory (route->factory route)]
       (dom/div nil
-        (header (:app/user (om/props this)))
         (factory (-> this om/props :subquery))))))

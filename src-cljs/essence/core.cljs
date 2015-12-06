@@ -39,7 +39,7 @@
                 (cb reply))))
 
 (def reconciler
-  (om/reconciler {:state {:app/user "something"}
+  (om/reconciler {:state {}
                   :parser parser
                   :send send-to-server
                   :remotes [:server]}))
